@@ -42,7 +42,7 @@
         dropzone.classList.remove('dragover');
 
         const files = e.dataTransfer.files;
-        if (files.length === 1 && files[0].type === 'model/usdz') {
+        if (files.length === 1 && files[0].name.endsWith('.usdz')) {
             uploadFile(files[0]);
         } else {
             alert('Only USDZ files are allowed!');
