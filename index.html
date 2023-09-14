@@ -18,6 +18,16 @@
         #dropzone.dragover {
             background-color: #f0f0f0;
         }
+        #fileTable {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+    
+        #fileTable td, #fileTable th {
+            border: 1px solid gray;
+            padding: 8px;
+        }
     </style>
 </head>
 <body>
@@ -31,6 +41,7 @@
             <th>#</th>
             <th>Scene File</th>
             <th>Pics</th>
+            <th>Description</th>
         </tr>
     </thead>
     <tbody>
@@ -62,6 +73,12 @@
         const usdzCell = document.createElement('td');
         usdzCell.textContent = usdzFile.name;
         row.appendChild(usdzCell);
+
+        const descriptionCell = document.createElement('td');
+        const inputField = document.createElement('input');
+        inputField.type = 'text';
+        descriptionCell.appendChild(inputField);
+        row.appendChild(descriptionCell);
 
         const imageCell = document.createElement('td');
         const select = document.createElement('select');
@@ -152,10 +169,12 @@
         rows.forEach(row => {
             const usdzName = row.querySelector('td:nth-child(2)').textContent;
             const imageName = row.querySelector('td:nth-child(3) select').value;
+            const description = row.querySelector('td:nth-child(4) input').value;
             htmlContent += `
                 <div>
                     <a href="${usdzName}" rel="ar">
                         <img src="${imageName}" width="250" height="250">
+                        <p>${description}</p>
                     </a>
                 </div>
             `;
