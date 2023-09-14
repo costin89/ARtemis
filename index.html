@@ -23,7 +23,6 @@
             width: 100%;
             margin-top: 20px;
         }
-    
         #fileTable td, #fileTable th {
             border: 1px solid gray;
             padding: 8px;
@@ -31,10 +30,8 @@
     </style>
 </head>
 <body>
-<center>
-<br><br><br>
+
 <div id="dropzone">Drop your USDZ and Image files here</div>
-<br><br><br>
 <table id="fileTable">
     <thead>
         <tr>
@@ -47,11 +44,9 @@
     <tbody>
     </tbody>
 </table>
-<br><br><br>
 <button id="exportBtn" disabled>Export HTML</button>
-<br><br><br>
 <p id="progress">0%</p>
-</center>
+
 <script>
     const dropzone = document.getElementById('dropzone');
     const fileTable = document.getElementById('fileTable').querySelector('tbody');
@@ -74,12 +69,6 @@
         usdzCell.textContent = usdzFile.name;
         row.appendChild(usdzCell);
 
-        const descriptionCell = document.createElement('td');
-        const inputField = document.createElement('input');
-        inputField.type = 'text';
-        descriptionCell.appendChild(inputField);
-        row.appendChild(descriptionCell);
-
         const imageCell = document.createElement('td');
         const select = document.createElement('select');
         imageFiles.forEach(img => {
@@ -90,6 +79,12 @@
         });
         imageCell.appendChild(select);
         row.appendChild(imageCell);
+
+        const descriptionCell = document.createElement('td');
+        const inputField = document.createElement('input');
+        inputField.type = 'text';
+        descriptionCell.appendChild(inputField);
+        row.appendChild(descriptionCell);
 
         fileTable.appendChild(row);
     }
@@ -181,20 +176,22 @@
         });
 
         htmlContent += `</div></body></html>`;
-        zip.file("index.html", htmlContent);
+        zip.file('index.html', htmlContent);
 
-        const zipBlob = await zip.generateAsync({ type: "blob" }, (metadata) => {
-            const progress = Math.round(metadata.percent);
-            progressElement.textContent = `${progress}%`;
+        zip.generateAsync({type: 'blob'}, metadata => {
+            const percentage = Math.floor(metadata.percent);
+            progressElement.textContent = `${percentage}%`;
+        }).then(content => {
+            const url = URL.createObjectURL(content);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'exported_files.zip';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         });
-
-        const downloadLink = document.createElement('a');
-        downloadLink.href = URL.createObjectURL(zipBlob);
-        downloadLink.download = 'quicklook_with_thumbnails.zip';
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
     });
+
 </script>
 </body>
 </html>
