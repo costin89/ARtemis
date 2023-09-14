@@ -2,88 +2,87 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
-    <title>USDZ Dropzone</title>
+    <title>Drop Area für USDZ-Dateien</title>
     <style>
-        #dropzone {
+        #dropArea {
+            border: 2px dashed #cccccc;
+            padding: 20px;
             width: 300px;
-            height: 200px;
-            border: 2px dashed gray;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            height: 150px;
+            text-align: center;
             cursor: pointer;
-        }
-        #dropzone.dragover {
-            background-color: #f0f0f0;
         }
     </style>
 </head>
 <body>
-<center>
-<br><br>
-<div id="dropzone">Drop your USDZ file here</div>
-<br><br><br>
-<button id="exportBtn" disabled>Export to ARKit Quick Look HTML</button>
-</center>
+<div id="dropArea">Dateien hier ablegen</div>
+<button id="exportBtn">Exportieren</button>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.5.0/jszip.min.js"></script>
+
 <script>
-    const dropzone = document.getElementById('dropzone');
-    const exportBtn = document.getElementById('exportBtn');
-    let usdzFile;
-
-    dropzone.addEventListener('dragover', (e) => {
+    const dropArea = document.getElementById('dropArea');
+    let usdzFiles = []; // Verwenden Sie ein Array, um die USDZ-Dateien zu speichern
+    
+    dropArea.addEventListener('dragover', (e) => {
         e.preventDefault();
-        dropzone.classList.add('dragover');
+        dropArea.style.backgroundColor = '#eaeaea';
     });
-
-    dropzone.addEventListener('dragleave', () => {
-        dropzone.classList.remove('dragover');
+    
+    dropArea.addEventListener('dragleave', () => {
+        dropArea.style.backgroundColor = '';
     });
-
-    dropzone.addEventListener('drop', (e) => {
+    
+    dropArea.addEventListener('drop', (e) => {
         e.preventDefault();
-        dropzone.classList.remove('dragover');
+        dropArea.style.backgroundColor = '';
     
         const files = e.dataTransfer.files;
-        if (files.length === 1 && files[0].name.endsWith('.usdz')) {
-            usdzFile = files[0];
-            exportBtn.disabled = false;
-        } else {
-            alert('Only USDZ files are allowed!');
+        for (let i = 0; i < files.length; i++) {
+            if (files[i].name.endsWith('.usdz')) {
+                console.log(`Datei akzeptiert: ${files[i].name}`);
+                usdzFiles.push(files[i]);
+            } else {
+                console.warn(`Ungültige Dateierweiterung: ${files[i].name}`);
+            }
         }
     });
-
-
+    
+    const exportBtn = document.getElementById('exportBtn');
+    
     exportBtn.addEventListener('click', async () => {
-    const htmlContent = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ARKit Quick Look</title>
-        </head>
-        <body>
-            <a href="${usdzFile.name}" rel="ar">View in AR</a>
-        </body>
-        </html>
-    `;
-
-    const zip = new JSZip();
-    zip.file("quicklook.html", htmlContent);
-    zip.file(usdzFile.name, usdzFile);
-
-    const zipBlob = await zip.generateAsync({ type: "blob" });
-    const downloadLink = document.createElement('a');
-    downloadLink.href = URL.createObjectURL(zipBlob);
-    downloadLink.download = 'quicklook.zip';
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-});
-
+        if (!usdzFiles.length) {
+            alert('Bitte ziehen Sie zuerst eine oder mehrere USDZ-Dateien in die Drop Area.');
+            return;
+        }
+    
+        let linksContent = usdzFiles.map(file => `<a href="${file.name}" rel="ar">View in AR (${file.name})</a>`).join('<br>');
+    
+        const htmlContent = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>ARKit Quick Look</title>
+            </head>
+            <body>
+                ${linksContent}
+            </body>
+            </html>
+        `;
+    
+        const zip = new JSZip();
+        zip.file("quicklook.html", htmlContent);
+        usdzFiles.forEach(file => zip.file(file.name, file));
+    
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(zipBlob);
+        downloadLink.download = 'quicklook.zip';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    });
 </script>
-
 </body>
 </html>
