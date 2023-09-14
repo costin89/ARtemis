@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USDZ Dropzone</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <title>USDZ with Thumbnails</title>
     <style>
         #dropzone {
             width: 300px;
@@ -21,16 +20,57 @@
     </style>
 </head>
 <body>
-<center>
-<br><br><br><br>
-<div id="dropzone">Drop your USDZ files here</div>
-<br><br>
-<button id="exportBtn" disabled>Export to ARKit Quick Look HTML</button>
-</center>
+
+<div id="dropzone">Drop your USDZ and Image files here</div>
+<table id="fileTable">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Scene File</th>
+            <th>Pics</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+<button id="exportBtn" disabled>Export HTML</button>
 <script>
     const dropzone = document.getElementById('dropzone');
+    const fileTable = document.getElementById('fileTable').querySelector('tbody');
     const exportBtn = document.getElementById('exportBtn');
+
+    let counter = 0;
     let usdzFiles = [];
+    let imageFiles = [];
+
+    function addRow(usdzFile, imageFiles) {
+        counter++;
+        const row = document.createElement('tr');
+
+        // Counter column
+        const counterCell = document.createElement('td');
+        counterCell.textContent = counter;
+        row.appendChild(counterCell);
+
+        // USDZ file column
+        const usdzCell = document.createElement('td');
+        usdzCell.textContent = usdzFile.name;
+        row.appendChild(usdzCell);
+
+        // Image dropdown column
+        const imageCell = document.createElement('td');
+        const select = document.createElement('select');
+        imageFiles.forEach(img => {
+            const option = document.createElement('option');
+            option.value = img.name;
+            option.textContent = img.name;
+            select.appendChild(option);
+        });
+        imageCell.appendChild(select);
+        row.appendChild(imageCell);
+
+        fileTable.appendChild(row);
+    }
 
     dropzone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -48,52 +88,89 @@
         Array.from(e.dataTransfer.files).forEach(file => {
             if (file.name.endsWith('.usdz')) {
                 usdzFiles.push(file);
+            } else if (file.name.endsWith('.jpg') || file.name.endsWith('.png')) {
+                imageFiles.push(file);
             } else {
-                alert('Only USDZ files are allowed!');
+                alert('Only USDZ, JPG, and PNG files are allowed!');
             }
         });
 
-        if (usdzFiles.length > 0) {
-            exportBtn.disabled = false;
+        if (usdzFiles.length > 0 && imageFiles.length > 0) {
+            addRow(usdzFiles.pop(), imageFiles);
         }
     });
 
     exportBtn.addEventListener('click', async () => {
         const zip = new JSZip();
-
-        // Add each usdz file to the zip
+        
+        // Add each usdz file and image file to the zip
         usdzFiles.forEach(file => {
             zip.file(file.name, file);
         });
-
-        // Create a simple index.html with links to all usdz files
+        
+        imageFiles.forEach(file => {
+            zip.file(file.name, file);
+        });
+        
+        // Create a simple index.html with images in a grid layout
         let htmlContent = `
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>ARKit Quick Look</title>
+                <title>ARKit Quick Look with Thumbnails</title>
+                <style>
+                    .grid {
+                        display: grid;
+                        grid-template-columns: repeat(3, 1fr);
+                        gap: 16px;
+                    }
+                    .grid img {
+                        max-width: 100%;
+                        height: auto;
+                    }
+                </style>
             </head>
             <body>
+            <div class="grid">
         `;
-
-        usdzFiles.forEach(file => {
-            htmlContent += `<a href="${file.name}" rel="ar">${file.name}</a><br>`;
+        
+        const rows = fileTable.querySelectorAll('tr');
+        rows.forEach(row => {
+            const usdzName = row.querySelector('td:nth-child(2)').textContent;
+            const imageName = row.querySelector('td:nth-child(3) select').value;
+            htmlContent += `
+                <div>
+                    <a href="${usdzName}" rel="ar">
+                        <img src="${imageName}" width="250" height="250">
+                    </a>
+                </div>
+            `;
         });
-
-        htmlContent += `</body></html>`;
-
+        
+        htmlContent += `</div></body></html>`;
+        
         zip.file("index.html", htmlContent);
-
+        
         const zipBlob = await zip.generateAsync({ type: "blob" });
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(zipBlob);
-        downloadLink.download = 'quicklook.zip';
+        downloadLink.download = 'quicklook_with_thumbnails.zip';
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
     });
+    
+    // Erweitern Sie die Drop-Logik, um den Export-Button zu aktivieren
+    dropzone.addEventListener('drop', (e) => {
+        // ... [restlicher Code unverändert]
+        
+        if (fileTable.querySelectorAll('tr').length > 0) {
+            exportBtn.disabled = false;
+        }
+    });
 </script>
+
 </body>
 </html>
