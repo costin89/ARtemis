@@ -95,24 +95,25 @@
 
         Array.from(e.dataTransfer.files).forEach(file => {
             const ext = file.name.split('.').pop().toLowerCase();
-            switch (ext) {
-                case 'usdz':
-                    currentUsdzFiles.push(file);
-                    usdzFiles.push(file);
-                    break;
-                case 'jpg':
-                case 'png':
-                    currentImageFiles.push(file);
-                    imageFiles.push(file);
-                    break;
-                case 'reality':
-                    currentUsdzFiles.push({ ...file, isReality: true });
-                    usdzFiles.push({ ...file, isReality: true });
-                    break;
-                default:
-                    alert(`Unsupported file type: ${ext}`);
-                    break;
-            }
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                switch (ext) {
+                    case 'usdz':
+                        usdzFiles.push({ name: file.name, data: event.target.result });
+                        break;
+                    case 'jpg':
+                    case 'png':
+                        imageFiles.push({ name: file.name, data: event.target.result });
+                        break;
+                    case 'reality':
+                        usdzFiles.push({ name: file.name, data: event.target.result, isReality: true });
+                        break;
+                    default:
+                        alert(`Unsupported file type: ${ext}`);
+                        break;
+                }
+            };
+            reader.readAsArrayBuffer(file);
         });
 
         currentUsdzFiles.forEach(usdzFile => {
@@ -126,13 +127,13 @@
 
     exportBtn.addEventListener('click', async () => {
         const zip = new JSZip();
-
+        
         usdzFiles.forEach(file => {
-            zip.file(file.name, file);
+            zip.file(file.name, file.data);
         });
-
+        
         imageFiles.forEach(file => {
-            zip.file(file.name, file);
+            zip.file(file.name, file.data);
         });
 
         let htmlContent = `
