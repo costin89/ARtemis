@@ -170,7 +170,10 @@
         
         zip.file("index.html", htmlContent);
         
-        const zipBlob = await zip.generateAsync({ type: "blob" });
+        const zipBlob = await zip.generateAsync({ type: "blob" }, (metadata) => {
+            const progress = Math.round(metadata.percent);
+            progressElement.textContent = `${progress}%`;
+        });
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(zipBlob);
         downloadLink.download = 'quicklook_with_thumbnails.zip';
@@ -179,10 +182,7 @@
         document.body.removeChild(downloadLink);
     });
 
-    const zipBlob = await zip.generateAsync({ type: "blob" }, (metadata) => {
-        const progress = Math.round(metadata.percent);
-        progressElement.textContent = `${progress}%`;
-    });
+    
     
     // Erweitern Sie die Drop-Logik, um den Export-Button zu aktivieren
     dropzone.addEventListener('drop', (e) => {
