@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
     <title>USDZ Dropzone</title>
     <style>
         #dropzone {
@@ -20,10 +21,12 @@
     </style>
 </head>
 <body>
-
+<center>
+<br><br>
 <div id="dropzone">Drop your USDZ file here</div>
+<br><br><br>
 <button id="exportBtn" disabled>Export to ARKit Quick Look HTML</button>
-
+</center>
 <script>
     const dropzone = document.getElementById('dropzone');
     const exportBtn = document.getElementById('exportBtn');
@@ -52,29 +55,33 @@
     });
 
 
-    exportBtn.addEventListener('click', () => {
-        const htmlContent = `
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>ARKit Quick Look</title>
-            </head>
-            <body>
-                <a href="${URL.createObjectURL(usdzFile)}" rel="ar">View in AR</a>
-            </body>
-            </html>
-        `;
+    exportBtn.addEventListener('click', async () => {
+    const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>ARKit Quick Look</title>
+        </head>
+        <body>
+            <a href="${usdzFile.name}" rel="ar">View in AR</a>
+        </body>
+        </html>
+    `;
 
-        const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
-        const downloadLink = document.createElement('a');
-        downloadLink.href = URL.createObjectURL(htmlBlob);
-        downloadLink.download = 'quicklook.html';
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-    });
+    const zip = new JSZip();
+    zip.file("quicklook.html", htmlContent);
+    zip.file(usdzFile.name, usdzFile);
+
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    const downloadLink = document.createElement('a');
+    downloadLink.href = URL.createObjectURL(zipBlob);
+    downloadLink.download = 'quicklook.zip';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+});
 
 </script>
 
