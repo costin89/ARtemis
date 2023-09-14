@@ -1,9 +1,12 @@
 function handleFileSelect(evt) {
-    evt.stopPropagation();
     evt.preventDefault();
+    evt.stopPropagation();
 
     var files = evt.dataTransfer.files;
-    for (var i = 0, f; f = files[i]; i++) {
+
+    if (files.length > 0) {
+        var f = files[0];
+        
         // Nur .usdz Dateien zulassen
         if (!f.name.endsWith('.usdz')) {
             alert('Nur .usdz Dateien sind zulässig!');
@@ -16,10 +19,10 @@ function handleFileSelect(evt) {
                     f.size, ' bytes, last modified: ',
                     f.lastModifiedDate.toLocaleDateString(), '</li>');
         document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
-    }
 
-    // Export-Button aktivieren
-    document.getElementById("exportBtn").disabled = false;
+        // Export-Button aktivieren
+        document.getElementById("exportBtn").disabled = false;
+    }
 }
 
 function handleDragOver(evt) {
