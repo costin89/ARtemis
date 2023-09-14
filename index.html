@@ -41,15 +41,16 @@
     dropzone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropzone.classList.remove('dragover');
-
+    
         const files = e.dataTransfer.files;
-        if (files.length === 1 && files[0].type === 'model/usdz') {
+        if (files.length === 1 && files[0].name.endsWith('.usdz')) {
             usdzFile = files[0];
             exportBtn.disabled = false;
         } else {
             alert('Only USDZ files are allowed!');
         }
     });
+
 
     exportBtn.addEventListener('click', () => {
         const htmlContent = `
