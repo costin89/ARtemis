@@ -21,24 +21,31 @@
     </style>
 </head>
 <body>
-<div id="dropzone">Drop your USDZ and Image files here</div>
-<table id="fileTable">
-    <thead>
-        <tr>
-            <th>#</th>
-            <th>Scene File</th>
-            <th>Pics</th>
-        </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
-<button id="exportBtn" disabled>Export HTML</button>
-<p id="progress">0%</p>
+<center>
+    <br><br><br>
+    <div id="dropzone">Drop your USDZ, Reality, and Image files here</div>
+    <br><br><br>
+    <table id="fileTable">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Scene File</th>
+                <th>Pics</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <br><br><br>
+    <button id="exportBtn" disabled>Export HTML</button>
+    <br><br>
+    <p id="progress">0%</p>
+</center>
 <script>
     const dropzone = document.getElementById('dropzone');
     const fileTable = document.getElementById('fileTable').querySelector('tbody');
     const exportBtn = document.getElementById('exportBtn');
+    const progressElement = document.getElementById('progress');
 
     let counter = 0;
     let usdzFiles = [];
@@ -53,7 +60,7 @@
         row.appendChild(counterCell);
 
         const usdzCell = document.createElement('td');
-        usdzCell.textContent = usdzFile.name;
+        usdzCell.textContent = usdzFile.name + (usdzFile.isReality ? ' (reality)' : '');
         row.appendChild(usdzCell);
 
         const imageCell = document.createElement('td');
@@ -87,14 +94,24 @@
         const currentImageFiles = [];
 
         Array.from(e.dataTransfer.files).forEach(file => {
-            if (file.name.endsWith('.usdz')) {
-                currentUsdzFiles.push(file);
-                usdzFiles.push(file);
-            } else if (file.name.endsWith('.jpg') || file.name.endsWith('.png')) {
-                currentImageFiles.push(file);
-                imageFiles.push(file);
-            } else {
-                alert('Only USDZ, JPG, and PNG files are allowed!');
+            const ext = file.name.split('.').pop().toLowerCase();
+            switch (ext) {
+                case 'usdz':
+                    currentUsdzFiles.push(file);
+                    usdzFiles.push(file);
+                    break;
+                case 'jpg':
+                case 'png':
+                    currentImageFiles.push(file);
+                    imageFiles.push(file);
+                    break;
+                case 'reality':
+                    currentUsdzFiles.push({ ...file, isReality: true });
+                    usdzFiles.push({ ...file, isReality: true });
+                    break;
+                default:
+                    alert(`Unsupported file type: ${ext}`);
+                    break;
             }
         });
 
@@ -144,10 +161,13 @@
         const rows = fileTable.querySelectorAll('tr');
         rows.forEach(row => {
             const usdzName = row.querySelector('td:nth-child(2)').textContent;
+            const isReality = usdzName.includes('(reality)');
+            const cleanedUsdzName = usdzName.replace(' (reality)', '');
             const imageName = row.querySelector('td:nth-child(3) select').value;
+
             htmlContent += `
                 <div>
-                    <a href="${usdzName}" rel="ar">
+                    <a href="${cleanedUsdzName}" rel="ar">
                         <img src="${imageName}" width="250" height="250">
                     </a>
                 </div>
@@ -155,10 +175,6 @@
         });
 
         htmlContent += `</div></body></html>`;
-
-        zip.file("index.html", htmlContent);
-
-        const progressElement = document.getElementById('progress');
 
         const zipBlob = await zip.generateAsync({ type: "blob" }, (metadata) => {
             const progress = Math.round(metadata.percent);
