@@ -22,11 +22,12 @@
 <body>
 
 <div id="dropzone">Drop your USDZ file here</div>
-<button id="exportBtn" disabled>Export to ARKit Quick Look</button>
+<button id="exportBtn" disabled>Export to ARKit Quick Look HTML</button>
 
 <script>
     const dropzone = document.getElementById('dropzone');
     const exportBtn = document.getElementById('exportBtn');
+    let usdzFile;
 
     dropzone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -42,22 +43,38 @@
         dropzone.classList.remove('dragover');
 
         const files = e.dataTransfer.files;
-        if (files.length === 1 && files[0].name.endsWith('.usdz')) {
-            uploadFile(files[0]);
+        if (files.length === 1 && files[0].type === 'model/usdz') {
+            usdzFile = files[0];
+            exportBtn.disabled = false;
         } else {
             alert('Only USDZ files are allowed!');
         }
     });
 
-    function uploadFile(file) {
-        // Here, you would implement the upload mechanism to your server.
-        // For this example, I'll just enable the export button.
-        exportBtn.disabled = false;
+    exportBtn.addEventListener('click', () => {
+        const htmlContent = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>ARKit Quick Look</title>
+            </head>
+            <body>
+                <a href="${URL.createObjectURL(usdzFile)}" rel="ar">View in AR</a>
+            </body>
+            </html>
+        `;
 
-        exportBtn.onclick = () => {
-            window.location = `ar-quicklook://${file.name}`;
-        };
-    }
+        const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(htmlBlob);
+        downloadLink.download = 'quicklook.html';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    });
+
 </script>
 
 </body>
