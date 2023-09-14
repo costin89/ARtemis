@@ -2,61 +2,72 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Drop Area für USDZ-Dateien</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.5.0/jszip.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USDZ Dropzone</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
     <style>
-        #dropArea {
-            border: 2px dashed #cccccc;
-            padding: 20px;
+        #dropzone {
             width: 300px;
-            height: 150px;
-            text-align: center;
+            height: 200px;
+            border: 2px dashed gray;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             cursor: pointer;
+        }
+        #dropzone.dragover {
+            background-color: #f0f0f0;
         }
     </style>
 </head>
 <body>
-<div id="dropArea">Dateien hier ablegen</div>
-<button id="exportBtn">Exportieren</button>
+<center>
+<br><br><br><br>
+<div id="dropzone">Drop your USDZ files here</div>
+<br><br>
+<button id="exportBtn" disabled>Export to ARKit Quick Look HTML</button>
+</center>
 <script>
-    const dropArea = document.getElementById('dropArea');
-    let usdzFiles = []; // Verwenden Sie ein Array, um die USDZ-Dateien zu speichern
-    
-    dropArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropArea.style.backgroundColor = '#eaeaea';
-    });
-    
-    dropArea.addEventListener('dragleave', () => {
-        dropArea.style.backgroundColor = '';
-    });
-    
-    dropArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropArea.style.backgroundColor = '';
-    
-        const files = e.dataTransfer.files;
-        for (let i = 0; i < files.length; i++) {
-            if (files[i].name.endsWith('.usdz')) {
-                console.log(`Datei akzeptiert: ${files[i].name}`);
-                usdzFiles.push(files[i]);
-            } else {
-                console.warn(`Ungültige Dateierweiterung: ${files[i].name}`);
-            }
-        }
-    });
-    
+    const dropzone = document.getElementById('dropzone');
     const exportBtn = document.getElementById('exportBtn');
-    
-    exportBtn.addEventListener('click', async () => {
-        if (!usdzFiles.length) {
-            alert('Bitte ziehen Sie zuerst eine oder mehrere USDZ-Dateien in die Drop Area.');
-            return;
+    let usdzFiles = [];
+
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+
+        Array.from(e.dataTransfer.files).forEach(file => {
+            if (file.name.endsWith('.usdz')) {
+                usdzFiles.push(file);
+            } else {
+                alert('Only USDZ files are allowed!');
+            }
+        });
+
+        if (usdzFiles.length > 0) {
+            exportBtn.disabled = false;
         }
-    
-        let linksContent = usdzFiles.map(file => `<a href="${file.name}" rel="ar">View in AR (${file.name})</a>`).join('<br>');
-    
-        const htmlContent = `
+    });
+
+    exportBtn.addEventListener('click', async () => {
+        const zip = new JSZip();
+
+        // Add each usdz file to the zip
+        usdzFiles.forEach(file => {
+            zip.file(file.name, file);
+        });
+
+        // Create a simple index.html with links to all usdz files
+        let htmlContent = `
             <!DOCTYPE html>
             <html lang="en">
             <head>
@@ -65,15 +76,16 @@
                 <title>ARKit Quick Look</title>
             </head>
             <body>
-                ${linksContent}
-            </body>
-            </html>
         `;
-    
-        const zip = new JSZip();
-        zip.file("quicklook.html", htmlContent);
-        usdzFiles.forEach(file => zip.file(file.name, file));
-    
+
+        usdzFiles.forEach(file => {
+            htmlContent += `<a href="${file.name}" rel="ar">${file.name}</a><br>`;
+        });
+
+        htmlContent += `</body></html>`;
+
+        zip.file("index.html", htmlContent);
+
         const zipBlob = await zip.generateAsync({ type: "blob" });
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(zipBlob);
