@@ -84,19 +84,29 @@
     dropzone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropzone.classList.remove('dragover');
-
+    
+        const currentUsdzFiles = [];
+        const currentImageFiles = [];
+    
         Array.from(e.dataTransfer.files).forEach(file => {
             if (file.name.endsWith('.usdz')) {
-                usdzFiles.push(file);
+                currentUsdzFiles.push(file);
+                usdzFiles.push(file);  // Store globally as well
             } else if (file.name.endsWith('.jpg') || file.name.endsWith('.png')) {
-                imageFiles.push(file);
+                currentImageFiles.push(file);
+                imageFiles.push(file);  // Store globally as well
             } else {
                 alert('Only USDZ, JPG, and PNG files are allowed!');
             }
         });
-
-        if (usdzFiles.length > 0 && imageFiles.length > 0) {
-            addRow(usdzFiles.pop(), imageFiles);
+    
+        // For each usdz file, add a row in the table
+        currentUsdzFiles.forEach(usdzFile => {
+            addRow(usdzFile, currentImageFiles.length > 0 ? currentImageFiles : imageFiles);
+        });
+    
+        if (fileTable.querySelectorAll('tr').length > 0) {
+            exportBtn.disabled = false;
         }
     });
 
