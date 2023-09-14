@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARtemis</title>
+    <title>USDZ with Thumbnails</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.5.0/jszip.min.js"></script>
     <style>
         #dropzone {
@@ -38,11 +38,14 @@
 </table>
 <br><br><br>
 <button id="exportBtn" disabled>Export HTML</button>
+<br><br><br>
+<p id="progress">0%</p>
 </center>
 <script>
     const dropzone = document.getElementById('dropzone');
     const fileTable = document.getElementById('fileTable').querySelector('tbody');
     const exportBtn = document.getElementById('exportBtn');
+    const progressElement = document.getElementById('progress');
 
     let counter = 0;
     let usdzFiles = [];
@@ -159,10 +162,13 @@
         });
 
         htmlContent += `</div></body></html>`;
-
         zip.file("index.html", htmlContent);
 
-        const zipBlob = await zip.generateAsync({ type: "blob" });
+        const zipBlob = await zip.generateAsync({ type: "blob" }, (metadata) => {
+            const progress = Math.round(metadata.percent);
+            progressElement.textContent = `${progress}%`;
+        });
+
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(zipBlob);
         downloadLink.download = 'quicklook_with_thumbnails.zip';
@@ -171,6 +177,5 @@
         document.body.removeChild(downloadLink);
     });
 </script>
-
 </body>
 </html>
