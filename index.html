@@ -22,24 +22,24 @@
 </head>
 <body>
 <center>
-    <br><br><br>
-    <div id="dropzone">Drop your USDZ, Reality, and Image files here</div>
-    <br><br><br>
-    <table id="fileTable">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Scene File</th>
-                <th>Pics</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
-    <br><br><br>
-    <button id="exportBtn" disabled>Export HTML</button>
-    <br><br>
-    <p id="progress">0%</p>
+<br><br><br>
+<div id="dropzone">Drop your USDZ, Reality, and Image files here</div>
+<br><br><br>    
+<table id="fileTable">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Scene File</th>
+            <th>Pics</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+<br><br><br>
+<button id="exportBtn" disabled>Export HTML</button>
+<br><br>
+<p id="progress">0%</p>
 </center>
 <script>
     const dropzone = document.getElementById('dropzone');
@@ -95,25 +95,24 @@
 
         Array.from(e.dataTransfer.files).forEach(file => {
             const ext = file.name.split('.').pop().toLowerCase();
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                switch (ext) {
-                    case 'usdz':
-                        usdzFiles.push({ name: file.name, data: event.target.result });
-                        break;
-                    case 'jpg':
-                    case 'png':
-                        imageFiles.push({ name: file.name, data: event.target.result });
-                        break;
-                    case 'reality':
-                        usdzFiles.push({ name: file.name, data: event.target.result, isReality: true });
-                        break;
-                    default:
-                        alert(`Unsupported file type: ${ext}`);
-                        break;
-                }
-            };
-            reader.readAsArrayBuffer(file);
+            switch (ext) {
+                case 'usdz':
+                    currentUsdzFiles.push(file);
+                    usdzFiles.push(file);
+                    break;
+                case 'jpg':
+                case 'png':
+                    currentImageFiles.push(file);
+                    imageFiles.push(file);
+                    break;
+                case 'reality':
+                    currentUsdzFiles.push({ ...file, isReality: true });
+                    usdzFiles.push({ ...file, isReality: true });
+                    break;
+                default:
+                    alert(`Unsupported file type: ${ext}`);
+                    break;
+            }
         });
 
         currentUsdzFiles.forEach(usdzFile => {
@@ -127,13 +126,13 @@
 
     exportBtn.addEventListener('click', async () => {
         const zip = new JSZip();
-        
+
         usdzFiles.forEach(file => {
-            zip.file(file.name, file.data);
+            zip.file(file.name, file);
         });
-        
+
         imageFiles.forEach(file => {
-            zip.file(file.name, file.data);
+            zip.file(file.name, file);
         });
 
         let htmlContent = `
