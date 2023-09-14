@@ -21,10 +21,7 @@
     </style>
 </head>
 <body>
-<br><br><br>
-<center>
 <div id="dropzone">Drop your USDZ and Image files here</div>
-<br><br><br>
 <table id="fileTable">
     <thead>
         <tr>
@@ -36,15 +33,12 @@
     <tbody>
     </tbody>
 </table>
-<br><br><br>
-<p id="progress">0%</p>
 <button id="exportBtn" disabled>Export HTML</button>
-</center>
+<p id="progress">0%</p>
 <script>
     const dropzone = document.getElementById('dropzone');
     const fileTable = document.getElementById('fileTable').querySelector('tbody');
     const exportBtn = document.getElementById('exportBtn');
-    const progressElement = document.getElementById('progress');
 
     let counter = 0;
     let usdzFiles = [];
@@ -54,17 +48,14 @@
         counter++;
         const row = document.createElement('tr');
 
-        // Counter column
         const counterCell = document.createElement('td');
         counterCell.textContent = counter;
         row.appendChild(counterCell);
 
-        // USDZ file column
         const usdzCell = document.createElement('td');
         usdzCell.textContent = usdzFile.name;
         row.appendChild(usdzCell);
 
-        // Image dropdown column
         const imageCell = document.createElement('td');
         const select = document.createElement('select');
         imageFiles.forEach(img => {
@@ -91,27 +82,26 @@
     dropzone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropzone.classList.remove('dragover');
-    
+
         const currentUsdzFiles = [];
         const currentImageFiles = [];
-    
+
         Array.from(e.dataTransfer.files).forEach(file => {
             if (file.name.endsWith('.usdz')) {
                 currentUsdzFiles.push(file);
-                usdzFiles.push(file);  // Store globally as well
+                usdzFiles.push(file);
             } else if (file.name.endsWith('.jpg') || file.name.endsWith('.png')) {
                 currentImageFiles.push(file);
-                imageFiles.push(file);  // Store globally as well
+                imageFiles.push(file);
             } else {
                 alert('Only USDZ, JPG, and PNG files are allowed!');
             }
         });
-    
-        // For each usdz file, add a row in the table
+
         currentUsdzFiles.forEach(usdzFile => {
             addRow(usdzFile, currentImageFiles.length > 0 ? currentImageFiles : imageFiles);
         });
-    
+
         if (fileTable.querySelectorAll('tr').length > 0) {
             exportBtn.disabled = false;
         }
@@ -119,17 +109,15 @@
 
     exportBtn.addEventListener('click', async () => {
         const zip = new JSZip();
-        
-        // Add each usdz file and image file to the zip
+
         usdzFiles.forEach(file => {
             zip.file(file.name, file);
         });
-        
+
         imageFiles.forEach(file => {
             zip.file(file.name, file);
         });
-        
-        // Create a simple index.html with images in a grid layout
+
         let htmlContent = `
             <!DOCTYPE html>
             <html lang="en">
@@ -141,7 +129,7 @@
                     .grid {
                         display: grid;
                         grid-template-columns: repeat(3, 1fr);
-                        gap: 5px;
+                        gap: 16px;
                     }
                     .grid img {
                         max-width: 100%;
@@ -152,7 +140,7 @@
             <body>
             <div class="grid">
         `;
-        
+
         const rows = fileTable.querySelectorAll('tr');
         rows.forEach(row => {
             const usdzName = row.querySelector('td:nth-child(2)').textContent;
@@ -165,15 +153,18 @@
                 </div>
             `;
         });
-        
+
         htmlContent += `</div></body></html>`;
-        
+
         zip.file("index.html", htmlContent);
-        
+
+        const progressElement = document.getElementById('progress');
+
         const zipBlob = await zip.generateAsync({ type: "blob" }, (metadata) => {
             const progress = Math.round(metadata.percent);
             progressElement.textContent = `${progress}%`;
         });
+
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(zipBlob);
         downloadLink.download = 'quicklook_with_thumbnails.zip';
@@ -181,18 +172,6 @@
         downloadLink.click();
         document.body.removeChild(downloadLink);
     });
-
-    
-    
-    // Erweitern Sie die Drop-Logik, um den Export-Button zu aktivieren
-    dropzone.addEventListener('drop', (e) => {
-        // ... [restlicher Code unverändert]
-        
-        if (fileTable.querySelectorAll('tr').length > 0) {
-            exportBtn.disabled = false;
-        }
-    });
 </script>
-
 </body>
 </html>
