@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USDZ with Thumbnails</title>
+    <title>ARtemis</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.5.0/jszip.min.js"></script>
     <style>
         #dropzone {
@@ -23,8 +23,8 @@
 <body>
 <center>
 <br><br><br>
-<div id="dropzone">Drop your USDZ, Reality, and Image files here</div>
-<br><br><br>    
+<div id="dropzone">Drop your USDZ and Image files here</div>
+<br><br><br>
 <table id="fileTable">
     <thead>
         <tr>
@@ -38,14 +38,11 @@
 </table>
 <br><br><br>
 <button id="exportBtn" disabled>Export HTML</button>
-<br><br>
-<p id="progress">0%</p>
 </center>
 <script>
     const dropzone = document.getElementById('dropzone');
     const fileTable = document.getElementById('fileTable').querySelector('tbody');
     const exportBtn = document.getElementById('exportBtn');
-    const progressElement = document.getElementById('progress');
 
     let counter = 0;
     let usdzFiles = [];
@@ -60,7 +57,7 @@
         row.appendChild(counterCell);
 
         const usdzCell = document.createElement('td');
-        usdzCell.textContent = usdzFile.name + (usdzFile.isReality ? ' (reality)' : '');
+        usdzCell.textContent = usdzFile.name;
         row.appendChild(usdzCell);
 
         const imageCell = document.createElement('td');
@@ -94,24 +91,14 @@
         const currentImageFiles = [];
 
         Array.from(e.dataTransfer.files).forEach(file => {
-            const ext = file.name.split('.').pop().toLowerCase();
-            switch (ext) {
-                case 'usdz':
-                    currentUsdzFiles.push(file);
-                    usdzFiles.push(file);
-                    break;
-                case 'jpg':
-                case 'png':
-                    currentImageFiles.push(file);
-                    imageFiles.push(file);
-                    break;
-                case 'reality':
-                    currentUsdzFiles.push({ ...file, isReality: true });
-                    usdzFiles.push({ ...file, isReality: true });
-                    break;
-                default:
-                    alert(`Unsupported file type: ${ext}`);
-                    break;
+            if (file.name.endsWith('.usdz')) {
+                currentUsdzFiles.push(file);
+                usdzFiles.push(file);
+            } else if (file.name.endsWith('.jpg') || file.name.endsWith('.png')) {
+                currentImageFiles.push(file);
+                imageFiles.push(file);
+            } else {
+                alert('Only USDZ, JPG, and PNG files are allowed!');
             }
         });
 
@@ -126,20 +113,15 @@
 
     exportBtn.addEventListener('click', async () => {
         const zip = new JSZip();
-    
-        // Adding .usdz and .reality files to the zip
+
         usdzFiles.forEach(file => {
-            if (file.isReality) {
-                zip.file(file.name, file, {binary: true});
-            } else {
-                zip.file(file.name, file, {binary: true});
-            }
+            zip.file(file.name, file);
         });
-    
+
         imageFiles.forEach(file => {
-            zip.file(file.name, file, {binary: true});
+            zip.file(file.name, file);
         });
-    
+
         let htmlContent = `
             <!DOCTYPE html>
             <html lang="en">
@@ -162,33 +144,25 @@
             <body>
             <div class="grid">
         `;
-    
+
         const rows = fileTable.querySelectorAll('tr');
         rows.forEach(row => {
             const usdzName = row.querySelector('td:nth-child(2)').textContent;
-            const isReality = usdzName.includes('(reality)');
-            const cleanedUsdzName = usdzName.replace(' (reality)', '');
             const imageName = row.querySelector('td:nth-child(3) select').value;
-    
             htmlContent += `
                 <div>
-                    <a href="${cleanedUsdzName}" rel="ar">
+                    <a href="${usdzName}" rel="ar">
                         <img src="${imageName}" width="250" height="250">
                     </a>
                 </div>
             `;
         });
-    
+
         htmlContent += `</div></body></html>`;
-    
-        // Adding the generated HTML content to the zip
+
         zip.file("index.html", htmlContent);
-    
-        const zipBlob = await zip.generateAsync({ type: "blob" }, (metadata) => {
-            const progress = Math.round(metadata.percent);
-            progressElement.textContent = `${progress}%`;
-        });
-    
+
+        const zipBlob = await zip.generateAsync({ type: "blob" });
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(zipBlob);
         downloadLink.download = 'quicklook_with_thumbnails.zip';
@@ -197,5 +171,6 @@
         document.body.removeChild(downloadLink);
     });
 </script>
+
 </body>
 </html>
