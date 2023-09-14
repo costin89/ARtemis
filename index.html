@@ -37,12 +37,14 @@
     </tbody>
 </table>
 <br><br><br>
+<p id="progress">0%</p>
 <button id="exportBtn" disabled>Export HTML</button>
 </center>
 <script>
     const dropzone = document.getElementById('dropzone');
     const fileTable = document.getElementById('fileTable').querySelector('tbody');
     const exportBtn = document.getElementById('exportBtn');
+    const progressElement = document.getElementById('progress');
 
     let counter = 0;
     let usdzFiles = [];
@@ -175,6 +177,11 @@
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
+    });
+
+    const zipBlob = await zip.generateAsync({ type: "blob" }, (metadata) => {
+        const progress = Math.round(metadata.percent);
+        progressElement.textContent = `${progress}%`;
     });
     
     // Erweitern Sie die Drop-Logik, um den Export-Button zu aktivieren
