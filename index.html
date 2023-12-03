@@ -1,201 +1,99 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USDZ with Thumbnails</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.5.0/jszip.min.js"></script>
-    <style>
-        #dropzone {
-            width: 300px;
-            height: 200px;
-            border: 2px dashed gray;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-        }
-        #dropzone.dragover {
-            background-color: #f0f0f0;
-        }
-        #fileTable {
-            border-collapse: collapse;
-            width: 50%;
-            margin-top: 20px;
-        }
-        #fileTable td, #fileTable th {
-            border: 1px solid gray;
-            padding: 8px;
-        }
-    </style>
-</head>
-<body>
-<center>
-<br><br><br>
-<div id="dropzone">Drop your USDZ and Image files here</div>
-<br><br><br>
-<table id="fileTable">
-    <thead>
-        <tr>
-            <th>#</th>
-            <th>Scene File</th>
-            <th>Pics</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
-<br><br><br>
-<button id="exportBtn" disabled>Export HTML</button>
-<br><br>
-<p id="progress">0%</p>
-</center>
-<script>
-    const dropzone = document.getElementById('dropzone');
-    const fileTable = document.getElementById('fileTable').querySelector('tbody');
-    const exportBtn = document.getElementById('exportBtn');
-    const progressElement = document.getElementById('progress');
-
-    let counter = 0;
-    let usdzFiles = [];
-    let imageFiles = [];
-
-    function addRow(usdzFile, imageFiles) {
-        counter++;
-        const row = document.createElement('tr');
-
-        const counterCell = document.createElement('td');
-        counterCell.textContent = counter;
-        row.appendChild(counterCell);
-
-        const usdzCell = document.createElement('td');
-        usdzCell.textContent = usdzFile.name;
-        row.appendChild(usdzCell);
-
-        const imageCell = document.createElement('td');
-        const select = document.createElement('select');
-        imageFiles.forEach(img => {
-            const option = document.createElement('option');
-            option.value = img.name;
-            option.textContent = img.name;
-            select.appendChild(option);
-        });
-        imageCell.appendChild(select);
-        row.appendChild(imageCell);
-
-        const descriptionCell = document.createElement('td');
-        const inputField = document.createElement('input');
-        inputField.type = 'text';
-        descriptionCell.appendChild(inputField);
-        row.appendChild(descriptionCell);
-
-        fileTable.appendChild(row);
-    }
-
-    dropzone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropzone.classList.add('dragover');
-    });
-
-    dropzone.addEventListener('dragleave', () => {
-        dropzone.classList.remove('dragover');
-    });
-
-    dropzone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropzone.classList.remove('dragover');
-
-        const currentUsdzFiles = [];
-        const currentImageFiles = [];
-
-        Array.from(e.dataTransfer.files).forEach(file => {
-            if (file.name.endsWith('.usdz')) {
-                currentUsdzFiles.push(file);
-                usdzFiles.push(file);
-            } else if (file.name.endsWith('.jpg') || file.name.endsWith('.png')) {
-                currentImageFiles.push(file);
-                imageFiles.push(file);
-            } else {
-                alert('Only USDZ, JPG, and PNG files are allowed!');
-            }
-        });
-
-        currentUsdzFiles.forEach(usdzFile => {
-            addRow(usdzFile, currentImageFiles.length > 0 ? currentImageFiles : imageFiles);
-        });
-
-        if (fileTable.querySelectorAll('tr').length > 0) {
-            exportBtn.disabled = false;
-        }
-    });
-
-    exportBtn.addEventListener('click', async () => {
-        const zip = new JSZip();
-
-        usdzFiles.forEach(file => {
-            zip.file(file.name, file);
-        });
-
-        imageFiles.forEach(file => {
-            zip.file(file.name, file);
-        });
-
-        let htmlContent = `
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>ARKit Quick Look with Thumbnails</title>
-                <style>
-                    .grid {
-                        display: grid;
-                        grid-template-columns: repeat(3, 1fr);
-                        gap: 16px;
-                    }
-                    .grid img {
-                        max-width: 100%;
-                        height: auto;
-                    }
-                </style>
-            </head>
-            <body>
-            <div class="grid">
-        `;
-
-        const rows = fileTable.querySelectorAll('tr');
-        rows.forEach(row => {
-            const usdzName = row.querySelector('td:nth-child(2)').textContent;
-            const imageName = row.querySelector('td:nth-child(3) select').value;
-            const description = row.querySelector('td:nth-child(4) input').value;
-            htmlContent += `
-                <div>
-                    <a href="${usdzName}" rel="ar">
-                        <img src="${imageName}" width="250" height="250">
-                    </a>
-                    <p>${description}</p>
-                </div>
-            `;
-        });
-
-        htmlContent += `</div></body></html>`;
-        zip.file('index.html', htmlContent);
-
-        zip.generateAsync({type: 'blob'}, metadata => {
-            const percentage = Math.floor(metadata.percent);
-            progressElement.textContent = `${percentage}%`;
-        }).then(content => {
-            const url = URL.createObjectURL(content);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'exported_files.zip';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        });
-    });
-
-</script>
-</body>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Impuls Struktur Generator</title>
+		<style>
+			.hidden {
+				display: none;
+			}
+		</style>
+	</head>
+	<body>
+		<center>
+		<h1>Impuls Struktur Generator </h1>
+		<br>
+		<form id="jsonForm">
+			<div>
+				<label for="image">Image:</label>
+				<input type="checkbox" id="image" name="image" onchange="toggleFields('image')">
+			</div>
+			<br>
+			<div>
+				<label for="cube">Cube:</label>
+				<input type="checkbox" id="cube" name="cube" onchange="toggleFields('cube')">
+			</div>
+			<br>
+			<div id="markerFields" class="hidden">
+				<!-- Marker fields will be added here -->
+			</div>
+			<br>
+			<button type="button" onclick="generateJSON()">Erstelle JSON</button>
+		</form>
+		</center>
+		<script>
+			function clearMarkerFields() {
+				for (let i = 1; i <= 6; i++) {
+					document.getElementById('object' + i).value = '';
+				}
+			}
+			
+			function toggleFields(source) {
+				const imageCheckbox = document.getElementById('image');
+				const cubeCheckbox = document.getElementById('cube');
+				const markerFields = document.getElementById('markerFields');
+				
+				if (source === 'cube' && cubeCheckbox.checked) {
+					imageCheckbox.checked = false;
+					markerFields.classList.add('hidden');
+					clearMarkerFields();
+				} else if (source === 'image' && imageCheckbox.checked) {
+					cubeCheckbox.checked = false;
+					markerFields.classList.remove('hidden');
+				} else {
+					markerFields.classList.add('hidden');
+					clearMarkerFields();
+				}
+			}
+			
+			function generateJSON() {
+				const form = document.getElementById('jsonForm');
+				let jsonData = {
+					horizontal: true,
+					vertical: true,
+					image: form['image'].checked,
+					cube: form['cube'].checked,
+					marker: []
+				};
+				
+				for (let i = 1; i <= 6; i++) {
+					jsonData.marker.push({
+						name: 'm' + i,
+						object: document.getElementById('object' + i).value
+					});
+				}
+				
+				const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(jsonData, null, 2));
+				const dlAnchorElem = document.createElement('a');
+				dlAnchorElem.setAttribute("href",     dataStr);
+				dlAnchorElem.setAttribute("download", "Impuls.json");
+				dlAnchorElem.click();
+			}
+			
+			// Initial setup for marker fields
+			window.onload = function() {
+				const markerFields = document.getElementById('markerFields');
+				for (let i = 1; i <= 6; i++) {
+					markerFields.innerHTML += `
+					<div>
+						<label>Marker_${i}_</label>
+						<label for="object${i}">3D_Object:</label>
+						<input type="text" id="object${i}" name="object${i}">
+					</div>
+					<br>
+				`;
+				}
+			}
+		</script>
+	</body>
 </html>
